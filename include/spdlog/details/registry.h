@@ -82,10 +82,11 @@ public:
     void set_formatter(std::unique_ptr<formatter> formatter)
     {
         std::lock_guard<std::recursive_mutex> lock(logger_map_mutex_);
+        std::shared_ptr<logger> shared;
         formatter_ = std::move(formatter);
         for (auto &l : loggers_)
         {
-            auto shared = l.second.lock();
+            shared = l.second.lock();
             if (shared)
             {
                 shared->set_formatter(formatter_->clone());
@@ -96,9 +97,10 @@ public:
     void set_level(level::level_enum log_level)
     {
         std::lock_guard<std::recursive_mutex> lock(logger_map_mutex_);
+        std::shared_ptr<logger> shared;
         for (auto &l : loggers_)
         {
-            auto shared = l.second.lock();
+            shared = l.second.lock();
             if (shared)
             {
                 shared->set_level(log_level);
@@ -110,9 +112,10 @@ public:
     void flush_on(level::level_enum log_level)
     {
         std::lock_guard<std::recursive_mutex> lock(logger_map_mutex_);
+        std::shared_ptr<logger> shared;
         for (auto &l : loggers_)
         {
-            auto shared = l.second.lock();
+            shared = l.second.lock();
             if (shared)
             {
                 shared->flush_on(log_level);
@@ -131,9 +134,10 @@ public:
     void set_error_handler(log_err_handler handler)
     {
         std::lock_guard<std::recursive_mutex> lock(logger_map_mutex_);
+        std::shared_ptr<logger> shared;
         for (auto &l : loggers_)
         {
-            auto shared = l.second.lock();
+            shared = l.second.lock();
             if (shared)
             {
                 shared->set_error_handler(handler);
@@ -145,9 +149,10 @@ public:
     void apply_all(const std::function<void(const std::shared_ptr<logger>)> &fun)
     {
         std::lock_guard<std::recursive_mutex> lock(logger_map_mutex_);
+        std::shared_ptr<logger> shared;
         for (auto &l : loggers_)
         {
-            auto shared = l.second.lock();
+            shared = l.second.lock();
             if (shared)
             {
                 fun(shared);
@@ -158,9 +163,10 @@ public:
     void flush_all()
     {
         std::lock_guard<std::recursive_mutex> lock(logger_map_mutex_);
+        std::shared_ptr<logger> shared;
         for (auto &l : loggers_)
         {
-            auto shared = l.second.lock();
+            shared = l.second.lock();
             if (shared)
             {
                 shared->flush();
