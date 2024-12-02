@@ -13,6 +13,7 @@
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <filesystem>
 
 #include "./source_loc.h"
 
@@ -47,7 +48,7 @@ namespace sinks {
 class sink;
 }
 
-using filename_t = std::string;
+using filename_t = std::filesystem::path;
 #define SPDLOG_FILENAME_T(s) s
 
 using log_clock = std::chrono::system_clock;

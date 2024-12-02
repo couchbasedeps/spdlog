@@ -196,12 +196,11 @@ struct auto_closer {
 };
 
 TEST_CASE("os::fwrite_bytes", "[os]") {
-    using spdlog::details::os::create_dir;
     using spdlog::details::os::fwrite_bytes;
     const char* filename = "log_tests/test_fwrite_bytes.txt";
     const char* msg = "hello";
     prepare_logdir();
-    REQUIRE(create_dir("log_tests"));
+    REQUIRE(std::filesystem::create_directories("log_tests"));
     {
         auto_closer closer(std::fopen(filename, "wb"));
         REQUIRE(closer.fp != nullptr);

@@ -6,6 +6,7 @@
 #include <cerrno>
 #include <cstdio>
 #include <utility>
+#include <filesystem>
 
 #include "spdlog/common.h"
 #include "spdlog/details/os.h"
@@ -28,9 +29,14 @@ void file_helper::open(const filename_t &fname, bool truncate) {
     if (event_handlers_.before_open) {
         event_handlers_.before_open(filename_);
     }
+    auto path = std::filesystem::path(fname);
+    if (!path.has_filename()) {
+        throw_spdlog_ex("Failed opening file: not regular file: !path.has_filename()");
+    }
+    create_directories(std::filesystem::path(fname).parent_path());
+
     for (int tries = 0; tries < open_tries_; ++tries) {
         // create containing folder if not exists already.
-        os::create_dir(os::dir_name(fname));
         if (truncate) {
             // Truncate by opening-and-closing a tmp file in "wb" mode, always
             // opening the actual log-we-write-to in "ab" mode, since that
@@ -49,10 +55,10 @@ void file_helper::open(const filename_t &fname, bool truncate) {
             return;
         }
 
-        details::os::sleep_for_millis(open_interval_);
+        os::sleep_for_millis(open_interval_);
     }
 
-    throw_spdlog_ex("Failed opening file " + os::filename_to_str(filename_) + " for writing", errno);
+    throw_spdlog_ex("Failed opening log file for writing", errno);
 }
 
 void file_helper::reopen(bool truncate) {
@@ -64,13 +70,13 @@ void file_helper::reopen(bool truncate) {
 
 void file_helper::flush() const {
     if (std::fflush(fd_) != 0) {
-        throw_spdlog_ex("Failed flush to file " + os::filename_to_str(filename_), errno);
+        throw_spdlog_ex("Failed flush to file", errno);
     }
 }
 
 void file_helper::sync() const {
     if (!os::fsync(fd_)) {
-        throw_spdlog_ex("Failed to fsync file " + os::filename_to_str(filename_), errno);
+        throw_spdlog_ex("Failed to fsync file", errno);
     }
 }
 
@@ -94,18 +100,19 @@ void file_helper::write(const memory_buf_t &buf) const {
     const size_t msg_size = buf.size();
     const auto *data = buf.data();
     if (!os::fwrite_bytes(data, msg_size, fd_)) {
-        throw_spdlog_ex("Failed writing to file " + os::filename_to_str(filename_), errno);
+        throw_spdlog_ex("Failed writing to file", errno);
     }
 }
 
 size_t file_helper::size() const {
     if (fd_ == nullptr) {
-        throw_spdlog_ex("Cannot use size() on closed file " + os::filename_to_str(filename_));
+        throw_spdlog_ex("Cannot use size() on closed file");
     }
     return os::filesize(fd_);
 }
 
 const filename_t &file_helper::filename() const { return filename_; }
+
 
 //
 // return file path and its extension:
@@ -121,23 +128,10 @@ const filename_t &file_helper::filename() const { return filename_; }
 // "my_folder/.mylog" => ("my_folder/.mylog", "")
 // "my_folder/.mylog.txt" => ("my_folder/.mylog", ".txt")
 std::tuple<filename_t, filename_t> file_helper::split_by_extension(const filename_t &fname) {
-    auto ext_index = fname.rfind('.');
-
-    // no valid extension found - return whole path and empty string as
-    // extension
-    if (ext_index == filename_t::npos || ext_index == 0 || ext_index == fname.size() - 1) {
-        return std::make_tuple(fname, filename_t());
-    }
-
-    // treat cases like "/etc/rc.d/somelogfile or "/abc/.hiddenfile"
-    auto folder_index = fname.find_last_of(details::os::folder_seps_filename);
-    if (folder_index != filename_t::npos && folder_index >= ext_index - 1) {
-        return std::make_tuple(fname, filename_t());
-    }
-
-    // finally - return a valid base and extension tuple
-    return std::make_tuple(fname.substr(0, ext_index), fname.substr(ext_index));
+    auto path = std::filesystem::path(fname);
+    return std::make_tuple(path.replace_extension(), path.extension());
 }
+
 
 }  // namespace details
 }  // namespace spdlog

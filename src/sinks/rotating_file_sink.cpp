@@ -1,13 +1,14 @@
 // Copyright(c) 2015-present, Gabi Melman & spdlog contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#include "spdlog/sinks/rotating_file_sink.h"
 
 #include <cerrno>
 #include <mutex>
 #include <string>
 #include <tuple>
+#include <filesystem>
 
+#include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/common.h"
 #include "spdlog/details/file_helper.h"
 #include "spdlog/details/os.h"
@@ -48,11 +49,15 @@ filename_t rotating_file_sink<Mutex>::calc_filename(const filename_t &filename, 
     if (index == 0U) {
         return filename;
     }
-
-    filename_t basename;
-    filename_t ext;
-    std::tie(basename, ext) = details::file_helper::split_by_extension(filename);
-    return fmt_lib::format(SPDLOG_FMT_STRING(SPDLOG_FILENAME_T("{}.{}{}")), basename, index, ext);
+    auto path = std::filesystem::path(filename);
+    const auto ext = path.extension();
+    std::filesystem::path new_ext;
+    if constexpr (std::is_same_v<std::filesystem::path::value_type, wchar_t>) {
+        new_ext = std::filesystem::path(std::to_wstring(index) + ext.wstring());
+    } else {
+         new_ext = std::filesystem::path(std::to_string(index) + ext.string());
+    }
+    return path.replace_extension(new_ext);
 }
 
 template <typename Mutex>
@@ -98,13 +103,15 @@ void rotating_file_sink<Mutex>::flush_() {
 // log.3.txt -> delete
 template <typename Mutex>
 void rotating_file_sink<Mutex>::rotate_() {
-    using details::os::filename_to_str;
-    using details::os::path_exists;
+    //using details::os::filename_to_str;
+    //using details::os::path_exists;
+    using std::filesystem::exists;
 
     file_helper_.close();
     for (auto i = max_files_; i > 0; --i) {
         filename_t src = calc_filename(base_filename_, i - 1);
-        if (!path_exists(src)) {
+        auto p = std::filesystem::path(src);
+        if (!std::filesystem::exists(p)) {
             continue;
         }
         filename_t target = calc_filename(base_filename_, i);
@@ -119,8 +126,7 @@ void rotating_file_sink<Mutex>::rotate_() {
                 file_helper_.reopen(true);  // truncate the log file anyway to prevent it
                                             // to grow beyond its limit!
                 current_size_ = 0;
-                throw_spdlog_ex("rotating_file_sink: failed renaming " + filename_to_str(src) + " to " + filename_to_str(target),
-                                errno);
+                throw_spdlog_ex("rotating_file_sink: failed renaming file", errno);
             }
         }
     }
@@ -132,8 +138,10 @@ void rotating_file_sink<Mutex>::rotate_() {
 template <typename Mutex>
 bool rotating_file_sink<Mutex>::rename_file_(const filename_t &src_filename, const filename_t &target_filename) {
     // try to delete the target file in case it already exists.
-    (void)details::os::remove(target_filename);
-    return details::os::rename(src_filename, target_filename) == 0;
+    (void)std::filesystem::remove(target_filename);
+    std::error_code ec;
+    std::filesystem::rename(src_filename, target_filename, ec);
+    return ec.value() == 0;
 }
 
 }  // namespace sinks

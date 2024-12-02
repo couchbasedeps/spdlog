@@ -33,17 +33,6 @@ constexpr static const filename_t::value_type folder_seps_filename[] = SPDLOG_FI
 // fopen_s on non windows for writing
 SPDLOG_API bool fopen_s(FILE **fp, const filename_t &filename, const filename_t &mode);
 
-// Remove filename. return 0 on success
-SPDLOG_API int remove(const filename_t &filename) noexcept;
-
-// Remove file if exists. return 0 on success
-// Note: Non atomic (might return failure to delete if concurrently deleted by other process/thread)
-SPDLOG_API int remove_if_exists(const filename_t &filename) noexcept;
-
-SPDLOG_API int rename(const filename_t &filename1, const filename_t &filename2) noexcept;
-
-// Return if file exists.
-SPDLOG_API bool path_exists(const filename_t &filename) noexcept;
 
 // Return file size according to open FILE* object
 SPDLOG_API size_t filesize(FILE *f);
@@ -80,16 +69,6 @@ SPDLOG_API void wstr_to_utf8buf(wstring_view_t wstr, memory_buf_t &target);
 SPDLOG_API void utf8_to_wstrbuf(string_view_t str, wmemory_buf_t &target);
 #endif
 
-// Return directory name from given path or empty string
-// "abc/file" => "abc"
-// "abc/" => "abc"
-// "abc" => ""
-// "abc///" => "abc//"
-SPDLOG_API filename_t dir_name(const filename_t &path);
-
-// Create a dir from the given path.
-// Return true if succeeded or if this dir already exists.
-SPDLOG_API bool create_dir(const filename_t &path);
 
 // non thread safe, cross platform getenv/getenv_s
 // return empty string if field not found

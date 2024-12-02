@@ -9,6 +9,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <filesystem>
 
 #include "../common.h"
 #include "../details/circular_q.h"
@@ -29,8 +30,17 @@ struct daily_filename_calculator {
     static filename_t calc_filename(const filename_t &filename, const tm &now_tm) {
         filename_t basename, ext;
         std::tie(basename, ext) = details::file_helper::split_by_extension(filename);
-        return fmt_lib::format(SPDLOG_FMT_STRING(SPDLOG_FILENAME_T("{}_{:04d}-{:02d}-{:02d}{}")), basename, now_tm.tm_year + 1900,
-                               now_tm.tm_mon + 1, now_tm.tm_mday, ext);
+
+        if constexpr (std::is_same_v<std::filesystem::path::value_type, wchar_t>) {
+            std::wstringstream oss;
+            oss << basename << L"_" << now_tm.tm_year + 1900 << L"-" << now_tm.tm_mon + 1 << L"-" << now_tm.tm_mday << ext;
+            return oss.str();
+        } else {
+            std::stringstream oss;
+            oss << basename << "_" << now_tm.tm_year + 1900 << "-" << now_tm.tm_mon + 1 << "-" << now_tm.tm_mday << ext;
+            return oss.str();
+        }
+
     }
 };
 
@@ -118,14 +128,12 @@ protected:
 
 private:
     void init_filenames_q_() {
-        using details::os::path_exists;
-
         filenames_q_ = details::circular_q<filename_t>(static_cast<size_t>(max_files_));
         std::vector<filename_t> filenames;
         auto now = log_clock::now();
         while (filenames.size() < max_files_) {
             auto filename = FileNameCalc::calc_filename(base_filename_, now_tm(now));
-            if (!path_exists(filename)) {
+            if (!std::filesystem::exists(filename)) {
                 break;
             }
             filenames.emplace_back(filename);
@@ -158,16 +166,18 @@ private:
     // Throw spdlog_ex on failure to delete the old file.
     void delete_old_() {
         using details::os::filename_to_str;
-        using details::os::remove_if_exists;
 
         filename_t current_file = file_helper_.filename();
         if (filenames_q_.full()) {
             auto old_filename = std::move(filenames_q_.front());
             filenames_q_.pop_front();
-            bool ok = remove_if_exists(old_filename) == 0;
-            if (!ok) {
-                filenames_q_.push_back(std::move(current_file));
-                throw_spdlog_ex("Failed removing daily file " + filename_to_str(old_filename), errno);
+            if (std::filesystem::exists(old_filename)) {
+                std::error_code ec;
+                std::filesystem::remove(old_filename, ec);
+                if (ec) {
+                    filenames_q_.push_back(std::move(current_file));
+                    throw_spdlog_ex("Failed removing daily file " + filename_to_str(old_filename), errno);
+                }
             }
         }
         filenames_q_.push_back(std::move(current_file));

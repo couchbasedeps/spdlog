@@ -98,21 +98,6 @@ bool fopen_s(FILE **fp, const filename_t &filename, const filename_t &mode) {
 #endif
     return *fp == nullptr;
 }
-
-int remove(const filename_t &filename) noexcept { return std::remove(filename.c_str()); }
-
-int remove_if_exists(const filename_t &filename) noexcept { return path_exists(filename) ? remove(filename) : 0; }
-
-int rename(const filename_t &filename1, const filename_t &filename2) noexcept {
-    return std::rename(filename1.c_str(), filename2.c_str());
-}
-
-// Return true if path exists (file or directory)
-bool path_exists(const filename_t &filename) noexcept {
-    struct stat buffer {};
-    return (::stat(filename.c_str(), &buffer) == 0);
-}
-
 // Return file size according to open FILE* object
 size_t filesize(FILE *f) {
     if (f == nullptr) {
@@ -277,45 +262,45 @@ bool in_terminal(FILE *file) noexcept { return ::isatty(fileno(file)) != 0; }
 // return true on success
 static bool mkdir_(const filename_t &path) { return ::mkdir(path.c_str(), static_cast<mode_t>(0755)) == 0; }
 
-// create the given directory - and all directories leading to it
-// return true on success or if the directory already exists
-bool create_dir(const filename_t &path) {
-    if (path_exists(path)) {
-        return true;
-    }
-
-    if (path.empty()) {
-        return false;
-    }
-
-    size_t search_offset = 0;
-    do {
-        auto token_pos = path.find_first_of(folder_seps_filename, search_offset);
-        // treat the entire path as a folder if no folder separator not found
-        if (token_pos == filename_t::npos) {
-            token_pos = path.size();
-        }
-
-        auto subdir = path.substr(0, token_pos);
-
-        if (!subdir.empty() && !path_exists(subdir) && !mkdir_(subdir)) {
-            return false;  // return error if failed creating dir
-        }
-        search_offset = token_pos + 1;
-    } while (search_offset < path.size());
-
-    return true;
-}
+// // create the given directory - and all directories leading to it
+// // return true on success or if the directory already exists
+// bool create_dir(const filename_t &path) {
+//     if (path_exists(path)) {
+//         return true;
+//     }
+//
+//     if (path.empty()) {
+//         return false;
+//     }
+//
+//     size_t search_offset = 0;
+//     do {
+//         auto token_pos = path.find_first_of(folder_seps_filename, search_offset);
+//         // treat the entire path as a folder if no folder separator not found
+//         if (token_pos == filename_t::npos) {
+//             token_pos = path.size();
+//         }
+//
+//         auto subdir = path.substr(0, token_pos);
+//
+//         if (!subdir.empty() && !path_exists(subdir) && !mkdir_(subdir)) {
+//             return false;  // return error if failed creating dir
+//         }
+//         search_offset = token_pos + 1;
+//     } while (search_offset < path.size());
+//
+//     return true;
+// }
 
 // Return directory name from given path or empty string
 // "abc/file" => "abc"
 // "abc/" => "abc"
 // "abc" => ""
 // "abc///" => "abc//"
-filename_t dir_name(const filename_t &path) {
-    auto pos = path.find_last_of(folder_seps_filename);
-    return pos != filename_t::npos ? path.substr(0, pos) : filename_t{};
-}
+// filename_t dir_name(const filename_t &path) {
+//     auto pos = path.find_last_of(folder_seps_filename);
+//     return pos != filename_t::npos ? path.substr(0, pos) : filename_t{};
+// }
 
 std::string getenv(const char *field) {
     char *buf = ::getenv(field);

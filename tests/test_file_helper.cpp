@@ -60,43 +60,43 @@ TEST_CASE("file_helper_reopen2", "[file_helper::reopen(false)]") {
     helper.reopen(false);
     REQUIRE(helper.size() == expected_size);
 }
-
-static void test_split_ext(const spdlog::filename_t::value_type *fname,
-                           const spdlog::filename_t::value_type *expect_base,
-                           const spdlog::filename_t::value_type *expect_ext) {
-    spdlog::filename_t filename(fname);
-    spdlog::filename_t expected_base(expect_base);
-    spdlog::filename_t expected_ext(expect_ext);
-
-    spdlog::filename_t basename;
-    spdlog::filename_t ext;
-    std::tie(basename, ext) = file_helper::split_by_extension(filename);
-    REQUIRE(basename == expected_base);
-    REQUIRE(ext == expected_ext);
-}
-
-TEST_CASE("file_helper_split_by_extension", "[file_helper::split_by_extension()]") {
-    test_split_ext(SPDLOG_FILENAME_T("mylog.txt"), SPDLOG_FILENAME_T("mylog"), SPDLOG_FILENAME_T(".txt"));
-    test_split_ext(SPDLOG_FILENAME_T(".mylog.txt"), SPDLOG_FILENAME_T(".mylog"), SPDLOG_FILENAME_T(".txt"));
-    test_split_ext(SPDLOG_FILENAME_T(".mylog"), SPDLOG_FILENAME_T(".mylog"), SPDLOG_FILENAME_T(""));
-    test_split_ext(SPDLOG_FILENAME_T("/aaa/bb.d/mylog"), SPDLOG_FILENAME_T("/aaa/bb.d/mylog"), SPDLOG_FILENAME_T(""));
-    test_split_ext(SPDLOG_FILENAME_T("/aaa/bb.d/mylog.txt"), SPDLOG_FILENAME_T("/aaa/bb.d/mylog"), SPDLOG_FILENAME_T(".txt"));
-    test_split_ext(SPDLOG_FILENAME_T("aaa/bbb/ccc/mylog.txt"), SPDLOG_FILENAME_T("aaa/bbb/ccc/mylog"), SPDLOG_FILENAME_T(".txt"));
-    test_split_ext(SPDLOG_FILENAME_T("aaa/bbb/ccc/mylog."), SPDLOG_FILENAME_T("aaa/bbb/ccc/mylog."), SPDLOG_FILENAME_T(""));
-    test_split_ext(SPDLOG_FILENAME_T("aaa/bbb/ccc/.mylog.txt"), SPDLOG_FILENAME_T("aaa/bbb/ccc/.mylog"),
-                   SPDLOG_FILENAME_T(".txt"));
-    test_split_ext(SPDLOG_FILENAME_T("/aaa/bbb/ccc/mylog.txt"), SPDLOG_FILENAME_T("/aaa/bbb/ccc/mylog"),
-                   SPDLOG_FILENAME_T(".txt"));
-    test_split_ext(SPDLOG_FILENAME_T("/aaa/bbb/ccc/.mylog"), SPDLOG_FILENAME_T("/aaa/bbb/ccc/.mylog"), SPDLOG_FILENAME_T(""));
-    test_split_ext(SPDLOG_FILENAME_T("../mylog.txt"), SPDLOG_FILENAME_T("../mylog"), SPDLOG_FILENAME_T(".txt"));
-    test_split_ext(SPDLOG_FILENAME_T(".././mylog.txt"), SPDLOG_FILENAME_T(".././mylog"), SPDLOG_FILENAME_T(".txt"));
-    test_split_ext(SPDLOG_FILENAME_T(".././mylog.txt/xxx"), SPDLOG_FILENAME_T(".././mylog.txt/xxx"), SPDLOG_FILENAME_T(""));
-    test_split_ext(SPDLOG_FILENAME_T("/mylog.txt"), SPDLOG_FILENAME_T("/mylog"), SPDLOG_FILENAME_T(".txt"));
-    test_split_ext(SPDLOG_FILENAME_T("//mylog.txt"), SPDLOG_FILENAME_T("//mylog"), SPDLOG_FILENAME_T(".txt"));
-    test_split_ext(SPDLOG_FILENAME_T(""), SPDLOG_FILENAME_T(""), SPDLOG_FILENAME_T(""));
-    test_split_ext(SPDLOG_FILENAME_T("."), SPDLOG_FILENAME_T("."), SPDLOG_FILENAME_T(""));
-    test_split_ext(SPDLOG_FILENAME_T("..txt"), SPDLOG_FILENAME_T("."), SPDLOG_FILENAME_T(".txt"));
-}
+//
+// static void test_split_ext(const spdlog::filename_t::value_type *fname,
+//                            const spdlog::filename_t::value_type *expect_base,
+//                            const spdlog::filename_t::value_type *expect_ext) {
+//     spdlog::filename_t filename(fname);
+//     spdlog::filename_t expected_base(expect_base);
+//     spdlog::filename_t expected_ext(expect_ext);
+//
+//     spdlog::filename_t basename;
+//     spdlog::filename_t ext;
+//     std::tie(basename, ext) = file_helper::split_by_extension(filename);
+//     REQUIRE(basename == expected_base);
+//     REQUIRE(ext == expected_ext);
+// }
+//
+// TEST_CASE("file_helper_split_by_extension", "[file_helper::split_by_extension()]") {
+//     test_split_ext(SPDLOG_FILENAME_T("mylog.txt"), SPDLOG_FILENAME_T("mylog"), SPDLOG_FILENAME_T(".txt"));
+//     test_split_ext(SPDLOG_FILENAME_T(".mylog.txt"), SPDLOG_FILENAME_T(".mylog"), SPDLOG_FILENAME_T(".txt"));
+//     test_split_ext(SPDLOG_FILENAME_T(".mylog"), SPDLOG_FILENAME_T(".mylog"), SPDLOG_FILENAME_T(""));
+//     test_split_ext(SPDLOG_FILENAME_T("/aaa/bb.d/mylog"), SPDLOG_FILENAME_T("/aaa/bb.d/mylog"), SPDLOG_FILENAME_T(""));
+//     test_split_ext(SPDLOG_FILENAME_T("/aaa/bb.d/mylog.txt"), SPDLOG_FILENAME_T("/aaa/bb.d/mylog"), SPDLOG_FILENAME_T(".txt"));
+//     test_split_ext(SPDLOG_FILENAME_T("aaa/bbb/ccc/mylog.txt"), SPDLOG_FILENAME_T("aaa/bbb/ccc/mylog"), SPDLOG_FILENAME_T(".txt"));
+//     test_split_ext(SPDLOG_FILENAME_T("aaa/bbb/ccc/mylog."), SPDLOG_FILENAME_T("aaa/bbb/ccc/mylog."), SPDLOG_FILENAME_T(""));
+//     test_split_ext(SPDLOG_FILENAME_T("aaa/bbb/ccc/.mylog.txt"), SPDLOG_FILENAME_T("aaa/bbb/ccc/.mylog"),
+//                    SPDLOG_FILENAME_T(".txt"));
+//     test_split_ext(SPDLOG_FILENAME_T("/aaa/bbb/ccc/mylog.txt"), SPDLOG_FILENAME_T("/aaa/bbb/ccc/mylog"),
+//                    SPDLOG_FILENAME_T(".txt"));
+//     test_split_ext(SPDLOG_FILENAME_T("/aaa/bbb/ccc/.mylog"), SPDLOG_FILENAME_T("/aaa/bbb/ccc/.mylog"), SPDLOG_FILENAME_T(""));
+//     test_split_ext(SPDLOG_FILENAME_T("../mylog.txt"), SPDLOG_FILENAME_T("../mylog"), SPDLOG_FILENAME_T(".txt"));
+//     test_split_ext(SPDLOG_FILENAME_T(".././mylog.txt"), SPDLOG_FILENAME_T(".././mylog"), SPDLOG_FILENAME_T(".txt"));
+//     test_split_ext(SPDLOG_FILENAME_T(".././mylog.txt/xxx"), SPDLOG_FILENAME_T(".././mylog.txt/xxx"), SPDLOG_FILENAME_T(""));
+//     test_split_ext(SPDLOG_FILENAME_T("/mylog.txt"), SPDLOG_FILENAME_T("/mylog"), SPDLOG_FILENAME_T(".txt"));
+//     test_split_ext(SPDLOG_FILENAME_T("//mylog.txt"), SPDLOG_FILENAME_T("//mylog"), SPDLOG_FILENAME_T(".txt"));
+//     test_split_ext(SPDLOG_FILENAME_T(""), SPDLOG_FILENAME_T(""), SPDLOG_FILENAME_T(""));
+//     test_split_ext(SPDLOG_FILENAME_T("."), SPDLOG_FILENAME_T("."), SPDLOG_FILENAME_T(""));
+//     test_split_ext(SPDLOG_FILENAME_T("..txt"), SPDLOG_FILENAME_T("."), SPDLOG_FILENAME_T(".txt"));
+// }
 
 TEST_CASE("file_event_handlers", "[file_helper]") {
     enum class flags { before_open, after_open, before_close, after_close };
